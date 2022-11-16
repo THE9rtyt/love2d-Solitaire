@@ -46,6 +46,22 @@ local numbers_assets = {
 
 --card images
 
+local hearts = {
+  "/assets/cards/ace_of_hearts.png",
+  "/assets/cards/2_of_hearts.png",
+  "/assets/cards/3_of_hearts.png",
+  "/assets/cards/4_of_hearts.png",
+  "/assets/cards/5_of_hearts.png",
+  "/assets/cards/6_of_hearts.png",
+  "/assets/cards/7_of_hearts.png",
+  "/assets/cards/8_of_hearts.png",
+  "/assets/cards/9_of_hearts.png",
+  "/assets/cards/10_of_hearts.png",
+  "/assets/cards/jack_of_hearts.png",
+  "/assets/cards/queen_of_hearts.png",
+  "/assets/cards/king_of_hearts.png",
+}
+
 local clubs = {
   "/assets/cards/ace_of_clubs.png",
   "/assets/cards/2_of_clubs.png",
@@ -78,22 +94,6 @@ local diamonds = {
   "/assets/cards/king_of_diamonds.png",
 }
 
-local hearts = {
-  "/assets/cards/ace_of_hearts.png",
-  "/assets/cards/2_of_hearts.png",
-  "/assets/cards/3_of_hearts.png",
-  "/assets/cards/4_of_hearts.png",
-  "/assets/cards/5_of_hearts.png",
-  "/assets/cards/6_of_hearts.png",
-  "/assets/cards/7_of_hearts.png",
-  "/assets/cards/8_of_hearts.png",
-  "/assets/cards/9_of_hearts.png",
-  "/assets/cards/10_of_hearts.png",
-  "/assets/cards/jack_of_hearts.png",
-  "/assets/cards/queen_of_hearts.png",
-  "/assets/cards/king_of_hearts.png",
-}
-
 local spades = {
   "/assets/cards/ace_of_spades.png",
   "/assets/cards/2_of_spades.png",
@@ -124,9 +124,9 @@ function displayHandler.init()--load field settings into display handler for fie
   numbers = love.graphics.newArrayImage(numbers_assets)
 
   cardTextures = {
+    love.graphics.newArrayImage(hearts),
     love.graphics.newArrayImage(clubs),
     love.graphics.newArrayImage(diamonds),
-    love.graphics.newArrayImage(hearts),
     love.graphics.newArrayImage(spades),
   }
 
@@ -136,16 +136,6 @@ end
 -------------------
 --private function
 -------------------
-
-local function getTopOfPlayStack(playStack)
-  local length = #playStack
-
-  if length > 3 then
-    return { unpack(playStack, length-2) }
-  else
-    return playStack
-  end
-end
 
 local function filterStackSize(stackSize)
   if stackSize > 3 then
@@ -231,7 +221,6 @@ function displayHandler.scanHit(x,y)
   else --below the deck and Aces
     for index, row in ipairs(stackRows) do --loop through stackRows, left to right to find rowhit
       if index == 8 then return nil end --return if index 8, did not click on a row's card
-      print(stackRows[index+1]-margins,row+margins)
       if x < stackRows[index+1]-margins and x > row+margins then --if within the rows card width
         local stackSize = fieldHandler.getStackSize(index)
         for i = 1, stackSize-1, 1 do
@@ -287,9 +276,7 @@ function displayHandler.drawTopRow()
     love.graphics.draw(back,stackRows[1]+margins,margins,0,cardScale,cardScale)
   end
 
-  local drawnPlayStack = getTopOfPlayStack(topRow.playStack)
-
-  for index, card in ipairs(drawnPlayStack) do
+  for index, card in ipairs(topRow.playStack) do
     local cardImage = cardTextures[card.type]
 
     love.graphics.drawLayer(cardImage, card.number,stackRows[2]+stackShift*(index-1)+margins,margins,0,cardScale,cardScale)
