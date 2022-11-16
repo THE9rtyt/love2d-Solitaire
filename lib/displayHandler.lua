@@ -147,11 +147,20 @@ local function getTopOfPlayStack(playStack)
   end
 end
 
+local function filterStackSize(stackSize)
+  if stackSize > 3 then
+    return 3
+  else
+    return stackSize
+  end
+end
+
 --------------------------------------
 -- public methods for drawing features
 --------------------------------------
 function displayHandler.resize(X,Y)
   margins = math.floor(Y*0.01)
+  print("margins: "..margins)
 
   windowY = Y-margins
   windowX = windowY*1.2
@@ -162,6 +171,7 @@ function displayHandler.resize(X,Y)
   local shift = centerX-math.floor(windowX/2)
   for i = 1,8,1 do
     stackRows[i] = math.floor( windowX / 7 ) * (i-1) + margins + shift
+    print(stackRows[i])
   end
 
   cardScale = (stackRows[2]-stackRows[1]-margins*2)/cardX
@@ -171,29 +181,49 @@ function displayHandler.resize(X,Y)
 end
 
 function displayHandler.scanHit(x,y)
+  print("scanning hit x: "..x.." y: "..y)
   if y < stackY then --above the stacks
     print("above the stacks")
     if y < margins or y > stackY-margins  or
       x < stackRows[1]+margins or x > stackRows[8] then
-      return nil --no hit, outside of toprow top/bottom
+      return nil --no hit, outside of toprow top/bottom and sides
     else
       print("check deck")
+      
       if x > stackRows[1]+margins and x < stackRows[2]-margins then 
         --deck hit
         return 8
       end
+
       print("check playStack")
-      for i = fieldHandler.getPlayStackSize(), 1, -1 do 
-        --playStack hit
-        local shift = stackRows[2]+stackShift*(i-1)
-        if x < shift+cardX*cardScale and x > shift then
-          return 9, i
+
+      local stackSize = fieldHandler.getPlayStackSize()
+      local filteredSize = filterStackSize(stackSize)
+
+      if filteredSize > 0 then
+        local leftEdgeOfCard = stackRows[2]+margins+stackShift*(filteredSize-1)
+        local rightEdgeOfCard = leftEdgeOfCard+cardX*cardScale
+
+        if x < rightEdgeOfCard and x > leftEdgeOfCard then
+          print("stack hit")
+
+          mouseOffset = {
+            x = x-leftEdgeOfCard,
+            y = y-margins
+          }
+          return 9, 1
         end
       end
+      
       print("check aces")
       for index, row in ipairs({ unpack(stackRows, 4) }) do
         if x > row+margins and x < stackRows[index+4]-margins then
           --aceStack hit
+          mouseOffset = {
+            x = x-row-margins,
+            y = y-margins
+          }
+
           return index+9, 1
         end
       end
@@ -201,18 +231,16 @@ function displayHandler.scanHit(x,y)
   else --below the deck and Aces
     for index, row in ipairs(stackRows) do --loop through stackRows, left to right to find rowhit
       if index == 8 then return nil end --return if index 8, did not click on a row's card
-      if x > row+margins and x < stackRows[index+1]-margins then --if within the rows card width
+      print(stackRows[index+1]-margins,row+margins)
+      if x < stackRows[index+1]-margins and x > row+margins then --if within the rows card width
         local stackSize = fieldHandler.getStackSize(index)
         for i = 1, stackSize-1, 1 do
           if y < stackY+stackShift*i then
             --save the mouse offset if cards are picked up
-            print(stackY+stackShift*i)
             mouseOffset = {
-              x = x-row,
+              x = x-row-margins,
               y = y-stackY-stackShift*(i-1)
             }
-            print(mouseOffset.y)
-            print(i)
             return index, i
           end
         end
@@ -223,7 +251,7 @@ function displayHandler.scanHit(x,y)
         if y < bottomOfCard then
           --save the mouse offset if card is picked up
           mouseOffset = {
-            x = x-row,
+            x = x-row-margins,
             y = y-topOfCard
           }
           return index, stackSize
@@ -240,11 +268,11 @@ function displayHandler.drawField()
     for index,card in pairs(stack) do
       if card then
         if not card.flipped then
-          love.graphics.draw(back,stackRows[Loc],stackY+stackShift*(index-1),0,cardScale,cardScale)
+          love.graphics.draw(back,stackRows[Loc]+margins,stackY+stackShift*(index-1),0,cardScale,cardScale)
         else
           local cardImage = cardTextures[card.type]
 
-          love.graphics.drawLayer(cardImage, card.number,stackRows[Loc],stackY+stackShift*(index-1),0,cardScale,cardScale)
+          love.graphics.drawLayer(cardImage, card.number,stackRows[Loc]+margins,stackY+stackShift*(index-1),0,cardScale,cardScale)
         end
       end
     end
@@ -254,8 +282,9 @@ end
 function displayHandler.drawTopRow()
   local topRow = fieldHandler.getTopRow()
 
+  --draw the deck card
   if #topRow.deck > 0 then
-    love.graphics.draw(back,stackRows[1],margins,0,cardScale,cardScale)
+    love.graphics.draw(back,stackRows[1]+margins,margins,0,cardScale,cardScale)
   end
 
   local drawnPlayStack = getTopOfPlayStack(topRow.playStack)
@@ -263,7 +292,7 @@ function displayHandler.drawTopRow()
   for index, card in ipairs(drawnPlayStack) do
     local cardImage = cardTextures[card.type]
 
-    love.graphics.drawLayer(cardImage, card.number,stackRows[2]+stackShift*(index-1),margins,0,cardScale,cardScale)
+    love.graphics.drawLayer(cardImage, card.number,stackRows[2]+stackShift*(index-1)+margins,margins,0,cardScale,cardScale)
   end
 
   for index, cards in ipairs(topRow.aces) do
@@ -272,7 +301,7 @@ function displayHandler.drawTopRow()
     if topCard then
       local cardImage = cardTextures[topCard.type]
 
-      love.graphics.drawLayer(cardImage, topCard.number,stackRows[index+3],margins,0,cardScale,cardScale)
+      love.graphics.drawLayer(cardImage, topCard.number,stackRows[index+3]+margins,margins,0,cardScale,cardScale)
     end
   end
 end

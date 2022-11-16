@@ -76,7 +76,7 @@ local function placeCard(stack,cards)
     for _index, value in ipairs(cards) do
       table.insert(field[stack],value)
     end
-  elseif stack == 9 then 
+  elseif stack == 9 then
     --magic number 1 here to grab the only index, 
     -- or else it adds the table of cards to the table we're placing it at
     table.insert(topRow.playStack,cards[1])
@@ -143,9 +143,7 @@ function fieldHandler.grabCard(index, stackItem)
   elseif index == 8 then --deck
     --deck
   elseif index == 9 then --play stack
-    if stackItem == #topRow.playStack then
-      table.insert(holding.card, table.remove(topRow.playStack, stackItem))
-    end
+    table.insert(holding.card, table.remove(topRow.playStack))
 
   elseif index <= 13 then --aces
     if #topRow.aces[index-9] > 0 then
