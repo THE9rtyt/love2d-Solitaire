@@ -47,7 +47,6 @@ function love.keyreleased(key)
 end
 
 function love.mousepressed(x, y, button, istouch)
-  print(x,y)
   mouseHandler.mousePressed(x,y,button)
 end
 

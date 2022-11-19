@@ -161,7 +161,6 @@ function displayHandler.resize(X,Y)
   local shift = centerX-math.floor(windowX/2)
   for i = 1,8,1 do
     stackRows[i] = math.floor( windowX / 7 ) * (i-1) + margins + shift
-    print(stackRows[i])
   end
 
   cardScale = (stackRows[2]-stackRows[1]-margins*2)/cardX
@@ -179,10 +178,10 @@ function displayHandler.scanHit(x,y)
       return nil --no hit, outside of toprow top/bottom and sides
     else
       print("check deck")
-      
-      if x > stackRows[1]+margins and x < stackRows[2]-margins then 
+
+      if x > stackRows[1]+margins and x < stackRows[2]-margins then
         --deck hit
-        return 8
+        return 8, 1
       end
 
       print("check playStack")

@@ -62,13 +62,103 @@ local holding = {
 local function makeCardList()
   local masterList = {}
 
-  for type = 0,3,1 do
+  for type = 1,4,1 do
     for card = 1, 13, 1 do
-      table.insert(masterList, {type = type, number = card, flipped = false})
+      table.insert(masterList, {type = type, number = card, flipped = true})
     end
   end
 
   return masterList
+end
+
+local function shuffleCards(deck)
+  local result = {}
+
+  while #deck ~= 0 do
+    local randNum = love.math.random(1,#deck)
+
+    local card = table.remove(deck, randNum)
+    table.insert(result, card)
+  end
+
+  return result
+end
+
+local function clearcards()
+  --clear field stacks
+  field = {
+    {},
+    {},
+    {},
+    {},
+    {},
+    {},
+    {}
+  }
+
+  --clear top row
+  topRow = {
+  deck = {},
+  playStack = {},
+  aces = {
+    {},
+    {},
+    {},
+    {}
+  }
+}
+end
+
+local function layoutField(deck)
+  for index, stack in ipairs(field) do
+    for i = 1,index-1,1 do
+      local card = table.remove(deck)
+      card.flipped = false
+      table.insert(stack,card)
+    end
+    local card = table.remove(deck)
+    table.insert(stack,card)
+  end
+end
+
+local function newGame()
+  clearcards()
+
+  local masterList = makeCardList()
+
+  topRow.deck = shuffleCards(masterList)
+
+  layoutField(topRow.deck)
+end
+
+local function revealDeck()
+  print("revealing deck")
+  if #topRow.deck > 0 then --cards in deck
+    for _i = 1,3,1 do --reveal next 3 cards
+      local card = table.remove(topRow.deck)
+
+      if card then
+        table.insert(topRow.playStack, card)
+      else
+        break
+      end
+    end
+  else --deck empty, return playStack to deck
+    for _i = 1,#topRow.playStack do
+      local card = table.remove(topRow.playStack)
+
+      table.insert(topRow.deck, card)
+    end
+  end
+end
+
+--check the ends of stacks for cards that need to be flipped
+local function checkStacks()
+  for index, stack in ipairs(field) do
+    if #stack > 0 and not stack[#stack].flipped then
+      stack[#stack].flipped = true
+    end
+  end
 end
 
 --non-checking card placement function for returning the holding cards
@@ -115,7 +205,7 @@ local function placeToAces(stack,cards)
       returnCards(holding.fromIndex,holding.card)
     end
   elseif (holding.card[1].number-1 == topRow.aces[stack-9][#topRow.aces[stack-9]].number) and
-  (holding.card[1].type%2 == topRow.aces[stack-9][#topRow.aces[stack-9]].type%2) then
+  (holding.card[1].type == topRow.aces[stack-9][#topRow.aces[stack-9]].type) then
     --stack is not empty and card is 1 above current card on top of stack
     table.insert(topRow.aces[stack-9],cards[1])
   else
@@ -153,19 +243,7 @@ end
 --module I/O methods
 --------------------
 function fieldHandler.init()
-  table.insert(field[1],{type = 2, number = 13, flipped = false})
-  table.insert(field[1],{type = 3, number = 12, flipped = true})
-  table.insert(field[1],{type = 4, number = 11, flipped = true})
-  table.insert(field[4],{type = 1, number = 2, flipped = true})
-  table.insert(field[6],{type = 2, number = 10, flipped = true})
-  table.insert(field[7],{type = 3, number = 11, flipped = true})
-
-  table.insert(topRow.deck,{type = 1, number = 9, flipped = false})
-
-  table.insert(topRow.playStack,{type = 4, number = 9, flipped = true})
-  table.insert(topRow.playStack,{type = 1, number = 3, flipped = true})
-  table.insert(topRow.playStack,{type = 2, number = 4, flipped = true})
-  table.insert(topRow.playStack,{type = 1, number = 1, flipped = true})
+  newGame()
 end
 
 function fieldHandler.getField()
@@ -215,7 +293,8 @@ function fieldHandler.grabCard(index, stackItem)
     end
 
   elseif index == 8 then --deck
-    --deck
+    print("here")
+    revealDeck()
   elseif index == 9 then --play stack
     table.insert(holding.card, table.remove(topRow.playStack))
 
@@ -244,6 +323,8 @@ function fieldHandler.dropCard(index)
       print("returning card on no found spots")
       holding.card = returnCards(holding.fromIndex,holding.card)
     end
+
+    checkStacks()
   end
 end
 

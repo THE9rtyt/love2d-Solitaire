@@ -27,9 +27,7 @@ function mouseHandler.mousePressed(x,y, button, status)
   if button == 1 then
     local hit, stackItem = displayHandler.scanHit(x,y)
     if hit then
-      if hit == 8 then
-        print("deck hit")
-      elseif stackItem > 0 then
+      if stackItem > 0 then
         fieldHandler.grabCard(hit, stackItem)
       end
     end
